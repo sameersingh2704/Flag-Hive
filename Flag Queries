@@ -1,0 +1,120 @@
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: FLAG ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+CREATE table flag_dummy(name VARCHAR(100), 
+landmass TINYINT, zone TINYINT, area SMALLINT,
+
+population SMALLINT,
+language TINYINT,
+religion TINYINT,
+
+bars TINYINT,
+strips TINYINT,
+colors TINYINT,
+red TINYINT,
+green TINYINT, blue TINYINT, gold_yellow TINYINT, 
+white TINYINT, black TINYINT, orange_brown TINYINT, 
+
+mainhue VARCHAR(50), circles TINYINT, crosses TINYINT, 
+saltires TINYINT, quarters TINYINT, sunstars TINYINT, 
+crescent TINYINT,
+triangle TINYINT, icon TINYINT, animate TINYINT,
+text TINYINT, topleft VARCHAR(50), botright VARCHAR(50)
+) 
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',';
+
+
+load data inpath "/user/edureka_572857/flag.data_dataset.txt" into table flag_dummy;
+
+
+CREATE table flag(name VARCHAR(100), 
+zone TINYINT, area SMALLINT,
+population SMALLINT,
+language TINYINT,
+religion TINYINT,
+bars TINYINT,
+strips TINYINT,
+colors TINYINT,
+red TINYINT,
+green TINYINT, blue TINYINT, gold_yellow TINYINT, 
+white TINYINT, black TINYINT, orange_brown TINYINT, 
+mainhue VARCHAR(50), circles TINYINT, crosses TINYINT, 
+saltires TINYINT, quarters TINYINT, sunstars TINYINT, 
+crescent TINYINT,
+triangle TINYINT, icon TINYINT, animate TINYINT,
+text TINYINT, topleft VARCHAR(50), botright VARCHAR(50)
+) 
+partitioned by (landmass TINYINT)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',';
+
+insert into flag partition(landmass) select name, 
+zone, area,
+population,
+language,
+religion,
+bars,
+strips,
+colors,
+red,
+green, blue, gold_yellow, 
+white, black, orange_brown, 
+mainhue, circles, crosses, 
+saltires, quarters, sunstars, 
+crescent,
+triangle, icon, animate,
+text, topleft, botright, landmass from flag_dummy;
+
+select count(*) as Number_Of_Countries, landmass from flag group by landmass; 
+
+test query : 
+select * from (select name, bars+strips as bars_strips from flag) a order by a.bars_strips desc; 
+
+select name, bars_strips_total ,dense_rank() over (order by bars_strips_total desc) as bar_strip_rank from
+(select name, bars+strips as bars_strips_total from flag) a limit 5;
+
+SELECT count(*) as countries_with_icon FROM flag where icon = 1;
+
+SELECT count(*) as countries_based_on_zone, zone FROM flag GROUP BY zone;
+
+select name, population from (select name, population, dense_rank() over (order by population asc) as population_wise_rank from flag where landmass = 2) a 
+where a.population_wise_rank = 1;
+
+select name, area from 
+(select name, area, dense_rank() over 
+(order by area desc) as area_wise_rank from flag where zone = 1) a where a.area_wise_rank = 1 ;
+
+select count(*) as number_of_countries, language from flag group by language order by number_of_countries desc;  
+
+select sum(circles) as sum_of_all_circles_in_all_country_flags from flag;
+
+select count(*) as flag_with_both_icon_and_text from flag where icon = 1 and text = 1;
+
+select total, color from 
+(select total, color, dense_rank() over (order by total desc) as color_rank from
+(
+select sum(red) as total, "red" as color from flag
+
+union all
+
+select sum(green) as total, "green" as color from flag
+
+union all
+
+select sum(blue) as total, "blue" as color from flag
+
+union all
+
+select sum(gold_yellow) as total, "gold_yellow" as color from flag
+
+union all
+
+select sum(white) as total, "white" as color from flag
+
+union all
+
+select sum(black) as total, "black" as color from flag
+
+union all
+
+select sum(orange_brown) as total, "orange_brown" as color from flag) a) b
+
+where b.color_rank =1; 
